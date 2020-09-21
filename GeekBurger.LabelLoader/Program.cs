@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using System.Text;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using System.Threading;
+using Microsoft.Extensions.Configuration;
 
 namespace GeekBurger.LabelLoader
 {
@@ -24,13 +25,27 @@ namespace GeekBurger.LabelLoader
         static string endpoint = "https://labelloader.cognitiveservices.azure.com/";
         static string uriBase = endpoint + "vision/v2.1/ocr";
 
-        private static ServiceBusConfiguration config = new ServiceBusConfiguration();
+
+        private static ServiceBusConfiguration config;
         private static IServiceBusNamespace serviceBus;
         private static readonly List<Message> messages = new List<Message>();
         private static Task lastTask;
 
         static async Task Main()
         {
+            // Build configuration
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .Build();
+
+            IConfiguration configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", true, true)
+                .Build();
+
+            config = builder.GetSection("serviceBus").Get<ServiceBusConfiguration>();
+
+
             var credentials = SdkContext.AzureCredentialsFactory
                 .FromServicePrincipal(config.ClientId,
                     config.ClientSecret,
